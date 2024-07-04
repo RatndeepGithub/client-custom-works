@@ -1,0 +1,8 @@
+{
+    "CodeGPT.apiKey": "CodeGPT Plus Beta",
+    "php.stubs": [
+        "pcntl",
+        "wordpress",
+        "*"
+    ]
+}

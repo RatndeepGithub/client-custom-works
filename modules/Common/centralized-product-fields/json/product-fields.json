@@ -1,0 +1,16 @@
+{
+    "common": {
+        "_mbc_title": {
+            "id": "_mbc_title",
+            "type": "TEXT",
+            "label":"Product title",
+            "decription":"louda lehsun"
+        },
+        "_mbc_brand": {
+            "id": "_mbc_brand",
+            "type": "TEXT",
+            "label":"Product brand",
+            "decription":"louda lehsun"
+        }
+    }
+}
