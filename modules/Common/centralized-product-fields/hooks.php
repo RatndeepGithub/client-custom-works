@@ -25,3 +25,12 @@ function ced_mbc_render_product_metabox() {
 	$fields_obj->render();
 }
 
+
+add_action( 'save_post', 'ced_mbc_save_product_fields_info' );
+
+function ced_mbc_save_product_fields_info() {
+	if ( isset( $_POST['_ced_mbc_product_level_info'] ) ) {
+		update_option( '_ced_mbc_product_level_info', json_encode( $_POST['_ced_mbc_product_level_info'] ) );
+	}
+}
+
