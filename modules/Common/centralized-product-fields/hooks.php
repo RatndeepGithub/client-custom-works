@@ -17,6 +17,32 @@ function ced_mbc_create_product_metabox( $product ) {
 
 }
 
+add_action( 'admin_enqueue_scripts', 'ced_mbc_enqueue_common_scripts' );
+add_action( 'admin_enqueue_scripts', 'ced_mbc_enqueue_common_styles' );
+
+function ced_mbc_enqueue_common_scripts() {
+	wp_enqueue_script(
+		'ced-mbc-cpf-addon',
+		CPF_URL . 'admin/js/ced-mbc-cpf-addon.js',
+		array( 'jquery' ),
+		'1.0.0',
+		array(
+			'in_footer' => true,
+			'strategy'  => 'defer',
+		)
+	);
+	$ajax_nonce     = wp_create_nonce( 'ced-mbc-cpf-addon' );
+	$localize_array = array(
+		'ajax_url'   => admin_url( 'admin-ajax.php' ),
+		'ajax_nonce' => $ajax_nonce,
+	);
+	wp_localize_script( 'ced-mbc-cpf-addon', 'cpf_addon', $localize_array );
+}
+
+function ced_mbc_enqueue_common_styles() {
+	wp_enqueue_style( 'ced-mbc-cpf-addon', CPF_URL . 'admin/css/ced-mbc-cpf-addon.css', array(), '1.0.0', 'all' );
+}
+
 function ced_mbc_render_product_metabox() {
 	global $post;
 	$product_id = $post->ID;

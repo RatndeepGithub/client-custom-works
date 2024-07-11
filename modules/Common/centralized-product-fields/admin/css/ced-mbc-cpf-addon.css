@@ -1,0 +1,36 @@
+#ced_mbc_product_fields_wrapper {
+	min-height: 400px;
+	display: flex;
+	width: 100%;
+}
+
+.ced_mbc_product_fields_tabs {
+	width: 20%;
+	min-height: 400px;
+	background-color: #ccc;
+}
+.ced_mbc_product_fields_content {
+	width: 80%;
+	padding: 10px;
+	box-sizing: border-box;
+	min-height: 400px;
+	background-color: seashell;
+}
+.tab {
+	padding: 10px;
+	cursor: pointer;
+}
+.tab.active {
+	background-color: #007bff;
+	color: white;
+}
+.tab-content {
+	display: none;
+}
+.tab-content.active {
+	display: block;
+}
+.reset_css {
+	margin: unset !important;
+	padding: unset !important;
+}
