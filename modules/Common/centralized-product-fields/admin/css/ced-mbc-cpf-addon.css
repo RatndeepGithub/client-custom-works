@@ -7,33 +7,51 @@
 .ced_mbc_product_fields_tabs {
 	width: 20%;
 	min-height: 400px;
-	background-color: #ccc;
+	border-right: 1px solid #ccc;
 }
 .ced_mbc_product_fields_content {
 	width: 80%;
 	padding: 10px;
 	box-sizing: border-box;
 	min-height: 400px;
-	background-color: seashell;
+	background-color: #fff;
 }
 .tab {
-	padding: 10px;
+	padding: 10px 40px 0px 10px;
 	cursor: pointer;
 	text-transform: uppercase;
 	color: #fff;
 	font-weight: bold;
 }
-.tab.active {
-	background-color: darkcyan;
-	color: white;
+.tab img {
+	height: 30px;
 }
+.tab:hover{
+	opacity: 0.8;
+}
+.tab.active {
+background-color: seashell;}
 .tab-content {
 	display: none;
 }
-.tab-content.active {
+.tab-content.active ,
+.submenu.active{
 	display: block;
 }
 .reset_css {
 	margin: unset !important;
 	padding: unset !important;
+}
+
+   .submenu {
+	display: none;
+	background-color: seashell;
+   }
+
+.submenu a {
+	display: block;
+	padding: 10px 20px;
+	text-decoration: none;
+	color: black;
+	text-transform: uppercase;
 }

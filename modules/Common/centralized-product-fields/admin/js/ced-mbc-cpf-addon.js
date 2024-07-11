@@ -36,8 +36,14 @@
 		'click',
 		'.tab',
 		function(){
+
+			if ($(this).hasClass('active') != true) {
+				$('.submenu').hide('slow');
+			}			
+			$(this).next().slideToggle('slow');
+
 			let target_id = $( this ).data( 'target_id' );
-			show_content( this,target_id );
+			show_content( this,target_id );			
 		}
 	);
 

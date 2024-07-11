@@ -35,7 +35,17 @@ class Ced_MBC_Render_Fields {
 				$html  = '';
 				foreach ( self::get_product_data_tabs() as $marketplace => $info ) {
 					?>
-					<div class="tab <?php echo esc_attr( 1 == $count ? 'active' : '' ); ?>" data-target_id="<?php echo esc_attr( $info['target'] ); ?>"><?php echo esc_attr( $info['label'] ); ?></div>
+					<div class="tab <?php echo esc_attr( 1 == $count ? 'active' : '' ); ?>" data-target_id="<?php echo esc_attr( $info['target'] ); ?>"><img src="<?php echo esc_url( CPF_URL . 'admin/assets/images/' . $marketplace.'.png' ); ?>" ></div>
+					<div class="submenu <?php echo esc_attr( 1 == $count ? 'active' : '' ); ?>">
+					<?php
+						$connected_shops = self::get_connected_shops( $marketplace );
+					foreach ( $connected_shops ?? array() as $shop ) {
+						?>
+							  <a href="#" id="<?php echo esc_attr( $shop ); ?>"><?php echo esc_attr( $shop ); ?></a>
+						<?php
+					}
+					?>
+			</div>
 					<?php
 					$html .= '<div id="' . esc_attr( $info['target'] ) . '" class="tab-content ' . ( 1 == $count ? 'active' : '' ) . '">' . esc_attr( $info['label'] ) . '</div>';
 					$count++;
@@ -60,10 +70,6 @@ class Ced_MBC_Render_Fields {
 			array(
 				'etsy',
 				'ebay',
-				'mysale',
-				'mydeal',
-				'kogan',
-				'catch',
 			)
 		);
 
@@ -77,6 +83,19 @@ class Ced_MBC_Render_Fields {
 		}
 
 		return $tabs;
+	}
+
+	private static function get_connected_shops( $marketplace ) {
+		switch ( $marketplace ) {
+			case 'etsy':
+				$shops = array( 'AwesomeSamShop', 'GoToStar' );
+				break;
+
+			default:
+				$shops = array( 'AwesomeSamShop', 'GoToStar' );
+				break;
+		}
+		return $shops;
 	}
 
 	private static function load_default_product_fields() {
