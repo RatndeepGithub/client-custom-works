@@ -31,11 +31,13 @@ class Ced_MBC_Render_Fields {
 		<div id="ced_mbc_product_fields_wrapper">
 			<div class="ced_mbc_product_fields_tabs">
 				<?php
-				$count = 1;
-				$html  = '';
+				$count               = 1;
+				$html                = '';
+				$default_marketplace = '';
+					$default_shop    = '';
 				foreach ( self::get_product_data_tabs() as $marketplace => $info ) {
 
-					if ( ! isset( $default_marketplace ) ) {
+					if ( empty( $default_marketplace ) ) {
 						$default_marketplace = $marketplace;
 					}
 					?>
@@ -45,7 +47,7 @@ class Ced_MBC_Render_Fields {
 							<?php
 							$connected_shops = self::get_connected_shops( $marketplace );
 							foreach ( $connected_shops ?? array() as $shop ) {
-								if ( ! isset( $default_shop ) ) {
+								if ( empty( $default_shop ) ) {
 									$default_shop = $shop;
 								}
 								?>
@@ -57,7 +59,7 @@ class Ced_MBC_Render_Fields {
 					</div>
 					<?php
 					$html .= '<div id="' . esc_attr( $info['target'] ) . '" class="tab-content ' . ( 1 == $count ? 'active' : '' ) . '">';
-					if ( 1 == $count ) {
+					if ( 1 !== $count && ! empty( $default_marketplace ) && ! empty( $default_shop ) ) {
 						$html .= $this->get_marketplace_shop_fields_html( $default_marketplace, $default_shop );
 					}
 					$html .= '</div>';
@@ -128,7 +130,7 @@ class Ced_MBC_Render_Fields {
 	}
 
 	public function prepare_mapping_dropdown() {
-		
+
 		global $wpdb;
 		$attributes               = wc_get_attribute_taxonomies();
 		$mapping_dropdown_options = array();
@@ -217,59 +219,65 @@ class Ced_MBC_Render_Fields {
 	private static function get_connected_shops( $marketplace ) {
 		switch ( $marketplace ) {
 			case 'ebay':
-				$shops = get_option( 'ced_ebay_connected_accounts' ) ?? array();
-
-				$shops = array_map(
-					function( $key, $value ) {
-						return array(
-							'_id'  => $key,
-							'name' => $value,
-						);
-					},
-					array_keys( $shops ),
-					array_keys( $shops )
-				);
+				$shops = get_option( 'ced_ebay_connected_accounts', array() );
+				if ( $shops ) {
+					$shops = array_map(
+						function( $key, $value ) {
+							return array(
+								'_id'  => $key,
+								'name' => $value,
+							);
+						},
+						array_keys( $shops ),
+						array_keys( $shops )
+					);
+				}
 
 				break;
 			case 'kogan':
-				$shops = get_option( 'ced_kogan_configuration_detail' );
-				$shops = array(
-					array(
-						'_id'  => $shops['seller_id'],
-						'name' => $shops['seller_id'],
-					),
-				);
+				$shops = get_option( 'ced_kogan_configuration_detail', array() );
+				if ( $shops ) {
+					$shops = array(
+						array(
+							'_id'  => $shops['seller_id'] ?? '',
+							'name' => $shops['seller_id'] ?? '',
+						),
+					);
+				}
 
 				break;
 			case 'mydeal':
-				$shops = get_option( 'ced_mydeal_configuration_detail' );
-				$shops = array(
-					array(
-						'_id'  => $shops['seller_id'],
-						'name' => $shops['seller_id'],
-					),
-				);
+				$shops = get_option( 'ced_mydeal_configuration_detail', array() );
+				if ( $shops ) {
+					$shops = array(
+						array(
+							'_id'  => $shops['seller_id'] ?? '',
+							'name' => $shops['seller_id'] ?? '',
+						),
+					);
+				}
 
 				break;
 			case 'mysale':
-				$shops =[];
+				$shops = array();
 
 				break;
 			case 'catch':
 				global $wpdb;
-				$tableName = $wpdb->prefix . 'ced_catch_accounts';
 
-				$result = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}ced_catch_accounts WHERE %d", 1 ), 'ARRAY_A' );
+				$shops = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}ced_catch_accounts WHERE %d", 1 ), 'ARRAY_A' );
 
-				$shops = array_map(
-					function( $info ) {
-						return array(
-							'_id'  => $info['id'],
-							'name' => $info['name'],
-						);
-					},
-					$result
-				);
+				if ( $shops ) {
+					$shops = array_map(
+						function( $info ) {
+							return array(
+								'_id'  => $info['id'],
+								'name' => $info['name'],
+							);
+						},
+						$shops
+					);
+				}
 
 				break;
 
