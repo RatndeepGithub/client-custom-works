@@ -45,7 +45,7 @@
 			let target_id = $( this ).data( 'target_id' );
 			show_content( this,target_id );			
 		}
-	);
+		);
 
 	function show_content(event, contentId) {
 		var tabs = document.querySelectorAll( '.ced_mbc_product_fields_tabs .tab' );
@@ -53,14 +53,14 @@
 			function(tab) {
 				tab.classList.remove( 'active' );
 			}
-		);
+			);
 
 		var contents = document.querySelectorAll( '.ced_mbc_product_fields_content .tab-content' );
 		contents.forEach(
 			function(content) {
 				content.classList.remove( 'active' );
 			}
-		);
+			);
 
 		event.classList.add( 'active' );
 		document.getElementById( contentId ).classList.add( 'active' );
@@ -76,9 +76,20 @@
 					parent.classList.add( parentClass );
 				}
 			}
-		);
+			);
 	}
 
 	apply_style_to_parent( '#ced_mbc_product_fields_wrapper', 'reset_css' );
+
+	function apply_select2(){
+		$( '.select2' ).select2();
+		$( '.multi-select' ).select2();
+	}
+	$( document ).ready(
+		function() {
+			apply_select2();
+		}
+	);
+
 
 })( jQuery );
