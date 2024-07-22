@@ -60,3 +60,21 @@ function ced_mbc_save_product_fields_info() {
 	}
 }
 
+
+add_action( 'wp_ajax_ced_mbc_render_profile_fields', 'ced_mbc_render_profile_fields' );
+
+function ced_mbc_render_profile_fields() {
+
+	$ajax_nonce = check_ajax_referer( 'ced-mbc-cpf-addon', 'ajax_nonce' );
+	if ( $ajax_nonce ) {
+		$post        = $_POST;
+		$shop_id     = $post['shop_id'] ?? 0;
+		$marketplace = $post['marketplace'] ?? '';
+		$product_id  = $post['product_id'] ?? 0;
+		$profile_id  = $post['profile_id'] ?? 0;
+		$site_id     = $post['site_id'] ?? 0;
+		include_once dirname( __FILE__ ) . '/classes/ced-mbc-render-fields.php';
+		$fields_obj     = new Ced_MBC_Render_Fields( $product_id );
+		$profile_fields = $fields_obj->get_profile_fields( $product_id, $shop_id, $marketplace, $profile_id, $site_id );
+	}
+}

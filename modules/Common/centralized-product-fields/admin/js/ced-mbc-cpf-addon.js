@@ -31,6 +31,7 @@
 
 	var ajax_url   = cpf_addon.ajax_url;
 	var ajax_nonce = cpf_addon.ajax_nonce;
+	var parsed_response;
 
 	$( document ).on(
 		'click',
@@ -91,5 +92,32 @@
 		}
 	);
 
+
+	$(document).on('change','.ced_mbc_profile_list',function() {
+		let marketplace = $(this).data('marketplace');
+		let shop_id = $(this).data('shop_id');
+		let site_id = $(this).data('site_id');
+		let product_id = $(this).data('product_id');
+		let profile_id = $(this).val();
+		$.ajax(
+		{
+			url:ajax_url,
+			data:{
+			ajax_nonce:ajax_nonce,
+			action:'ced_mbc_render_profile_fields',
+				shop_id:shop_id,
+				marketplace:marketplace,
+				product_id:product_id,
+				profile_id:profile_id,
+				site_id:site_id,
+			},
+			type:'POST',
+			success: function(response){
+				parsed_response = jQuery.parseJSON(response);
+				$('#'+marketplace+'_profile_fields_wrapper').html(parsed_response.html);
+			}
+		}
+		);
+	});
 
 })( jQuery );

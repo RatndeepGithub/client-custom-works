@@ -59,7 +59,7 @@ class Ced_MBC_Render_Fields {
 					</div>
 					<?php
 					$html .= '<div id="' . esc_attr( $info['target'] ) . '" class="tab-content ' . ( 1 == $count ? 'active' : '' ) . '">';
-					if ( 1 !== $count && ! empty( $default_marketplace ) && ! empty( $default_shop ) ) {
+					if ( 1 == $count && ! empty( $default_marketplace ) && ! empty( $default_shop ) ) {
 						$html .= $this->get_marketplace_shop_fields_html( $default_marketplace, $default_shop );
 					}
 					$html .= '</div>';
@@ -102,6 +102,29 @@ class Ced_MBC_Render_Fields {
 		$html  = '<div>';
 		$html .= '<table class="ced_mbc_product_fields_wrapper">';
 
+		$html .= $this->get_common_fields_html( $fields );
+
+		$html    .= '</table>';
+		$html    .= '<label class="ced_mbc_product_label">Profile</label>';
+		$html    .= '<td><select class="ced_mbc_profile_list" data-marketplace="ebay" data-shop_id="' . esc_attr( $shop['_id'] ) . '" data-site_id="' . array_keys( $shop['shop_info'] )[0] . '" data-product_id="' . $this->product_id . '">';
+		$html    .= '<option value="">--</option>';
+		$profiles = array(
+			25 => array( 'name' => 'Clothing' ),
+			30 => array( 'name' => 'Jewellery' ),
+		);
+		foreach ( $profiles as $id => $info ) {
+			$html .= '<option value="' . $id . '">' . $info['name'] . '</option>';
+		}
+		$html .= '</select>';
+
+		$html .= '</div>';
+		$html .= '<div id="ebay_profile_fields_wrapper"></div>';
+		return $html;
+
+	}
+
+	private function get_common_fields_html( $fields ) {
+		$html = '';
 		foreach ( $fields as $key => $field ) {
 			$id = $field['_id'] ?? '';
 
@@ -114,19 +137,15 @@ class Ced_MBC_Render_Fields {
 				foreach ( $field['options'] as $value => $label ) {
 					$html .= '<option value="' . $value . '">' . $label . '</option>';
 				}
-				$html .= '</td></select>';
+				$html .= '</select></td>';
 			} else {
 				$html .= '<td><input type="text"></td>';
 			}
 
-			$html .= '<td>' . str_replace( '{{mapping_name_attribute}}', $id, $this->mapping_drop_down ) . '</td>';
+			$html .= '<td>' . str_replace( array( '{{mapping_name_attribute}}', '{{mapping_attribute_selected}}' ), array( $id, 'selected' ), $this->mapping_drop_down ) . '</td>';
 			$html .= '</tr>';
 		}
-
-		$html .= '</table>';
-		$html .= '</div>';
 		return $html;
-
 	}
 
 	public function prepare_mapping_dropdown() {
@@ -220,24 +239,23 @@ class Ced_MBC_Render_Fields {
 		switch ( $marketplace ) {
 			case 'ebay':
 				$shops = get_option( 'ced_ebay_connected_accounts', array() );
+				// print_r($shops);die;
 				if ( $shops ) {
-					$shops = array_map(
-						function( $key, $value ) {
-							return array(
-								'_id'  => $key,
-								'name' => $value,
-							);
-						},
-						array_keys( $shops ),
-						array_keys( $shops )
-					);
+					$result = array();
+					foreach ( $shops as $key => $value ) {
+						$result[] = array(
+							'_id'       => $key,
+							'name'      => $key,
+							'shop_info' => $value,
+						);
+					}
 				}
 
 				break;
 			case 'kogan':
 				$shops = get_option( 'ced_kogan_configuration_detail', array() );
 				if ( $shops ) {
-					$shops = array(
+					$result = array(
 						array(
 							'_id'  => $shops['seller_id'] ?? '',
 							'name' => $shops['seller_id'] ?? '',
@@ -249,7 +267,7 @@ class Ced_MBC_Render_Fields {
 			case 'mydeal':
 				$shops = get_option( 'ced_mydeal_configuration_detail', array() );
 				if ( $shops ) {
-					$shops = array(
+					$result = array(
 						array(
 							'_id'  => $shops['seller_id'] ?? '',
 							'name' => $shops['seller_id'] ?? '',
@@ -259,7 +277,7 @@ class Ced_MBC_Render_Fields {
 
 				break;
 			case 'mysale':
-				$shops = array();
+				$result = array();
 
 				break;
 			case 'catch':
@@ -268,7 +286,7 @@ class Ced_MBC_Render_Fields {
 				$shops = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}ced_catch_accounts WHERE %d", 1 ), 'ARRAY_A' );
 
 				if ( $shops ) {
-					$shops = array_map(
+					$result = array_map(
 						function( $info ) {
 							return array(
 								'_id'  => $info['id'],
@@ -282,7 +300,27 @@ class Ced_MBC_Render_Fields {
 				break;
 
 		}
-		return $shops;
+		return $result;
+	}
+
+	public function get_profile_fields( $product_id, $shop_id, $marketplace, $profile_id ) {
+		$html = '';
+		switch ( $marketplace ) {
+			case 'ebay':
+				$html = self::get_html($shop_id,$profile_id);
+				break;
+
+			default:
+				// code...
+				break;
+		}
+
+		echo json_encode( array( 'html' => $html ) );
+		wp_die();
+	}
+
+	private static function get_html($shop_id,$profile_id) {
+		
 	}
 
 	private static function load_default_product_fields() {
