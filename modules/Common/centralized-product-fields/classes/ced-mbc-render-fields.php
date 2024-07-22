@@ -106,14 +106,21 @@ class Ced_MBC_Render_Fields {
 
 		$html    .= '</table>';
 		$html    .= '<label class="ced_mbc_product_label">Profile</label>';
-		$html    .= '<td><select class="ced_mbc_profile_list" data-marketplace="ebay" data-shop_id="' . esc_attr( $shop['_id'] ) . '" data-site_id="' . array_keys( $shop['shop_info'] )[0] . '" data-product_id="' . $this->product_id . '">';
+		$html    .= '<td><select class="ced_mbc_profile_list" data-marketplace="ebay" data-shop_id="' . esc_attr( $shop['_id'] ) . '" data-site_id="' . $shop['shop_info']['site_id'] . '" data-product_id="' . $this->product_id . '">';
 		$html    .= '<option value="">--</option>';
-		$profiles = array(
-			25 => array( 'name' => 'Clothing' ),
-			30 => array( 'name' => 'Jewellery' ),
-		);
+
+		global $wpdb;
+		$tableName = $wpdb->prefix . 'ced_ebay_profiles';
+		$user_id   =  $shop['_id']??'';
+		$site_id   = $shop['shop_info']['site_id']??'';
+// 		var_dump($site_id);
+// 		var_dump($user_id);
+		$result   = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}ced_ebay_profiles WHERE `user_id`=%s", $user_id ), 'ARRAY_A' );
+		$profiles = $result;
+// 		print_r($profiles);
+// 		return '';
 		foreach ( $profiles as $id => $info ) {
-			$html .= '<option value="' . $id . '">' . $info['name'] . '</option>';
+			$html .= '<option value="' . $info['id'] . '">' . $info['profile_name'] . '</option>';
 		}
 		$html .= '</select>';
 
@@ -238,7 +245,7 @@ class Ced_MBC_Render_Fields {
 	private static function get_connected_shops( $marketplace ) {
 		switch ( $marketplace ) {
 			case 'ebay':
-				$shops = get_option( 'ced_ebay_connected_accounts', array() );
+				$shops = get_option( 'ced_ebay_user_access_token', array() );
 				// print_r($shops);die;
 				if ( $shops ) {
 					$result = array();
