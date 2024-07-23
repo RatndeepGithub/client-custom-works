@@ -76,5 +76,8 @@ function ced_mbc_render_profile_fields() {
 		include_once dirname( __FILE__ ) . '/classes/ced-mbc-render-fields.php';
 		$fields_obj     = new Ced_MBC_Render_Fields( $product_id );
 		$profile_fields = $fields_obj->get_profile_fields( $product_id, $shop_id, $marketplace, $profile_id, $site_id );
+
+		echo json_encode( array( 'html' => $profile_fields ) );
+		wp_die();
 	}
 }

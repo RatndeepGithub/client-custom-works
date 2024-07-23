@@ -34,7 +34,7 @@ class Ced_MBC_Render_Fields {
 				$count               = 1;
 				$html                = '';
 				$default_marketplace = '';
-					$default_shop    = '';
+				$default_shop    = '';
 				foreach ( self::get_product_data_tabs() as $marketplace => $info ) {
 
 					if ( empty( $default_marketplace ) ) {
@@ -86,12 +86,12 @@ class Ced_MBC_Render_Fields {
 		$fields = self::load_default_product_fields();
 		switch ( $default_marketplace ) {
 			case 'ebay':
-				$html = $this->get_ebay_product_fields_html( $default_shop, $fields );
-				break;
+			$html = $this->get_ebay_product_fields_html( $default_shop, $fields );
+			break;
 
 			default:
-				$html = '';
-				break;
+			$html = '';
+			break;
 		}
 		return $html;
 
@@ -104,21 +104,21 @@ class Ced_MBC_Render_Fields {
 
 		$html .= $this->get_common_fields_html( $fields );
 
-		$html    .= '</table>';
-		$html    .= '<label class="ced_mbc_product_label">Profile</label>';
-		$html    .= '<td><select class="ced_mbc_profile_list" data-marketplace="ebay" data-shop_id="' . esc_attr( $shop['_id'] ) . '" data-site_id="' . $shop['shop_info']['site_id'] . '" data-product_id="' . $this->product_id . '">';
-		$html    .= '<option value="">--</option>';
+		$html .= '</table>';
+		$html .= '<label class="ced_mbc_product_label">Profile</label>';
+		$html .= '<td><select class="ced_mbc_profile_list" data-marketplace="ebay" data-shop_id="' . esc_attr( $shop['_id'] ) . '" data-site_id="' . $shop['shop_info']['site_id'] . '" data-product_id="' . $this->product_id . '">';
+		$html .= '<option value="">--</option>';
 
 		global $wpdb;
 		$tableName = $wpdb->prefix . 'ced_ebay_profiles';
-		$user_id   =  $shop['_id']??'';
-		$site_id   = $shop['shop_info']['site_id']??'';
-// 		var_dump($site_id);
-// 		var_dump($user_id);
+		$user_id   = $shop['_id'] ?? '';
+		$site_id   = $shop['shop_info']['site_id'] ?? '';
+		// var_dump($site_id);
+		// var_dump($user_id);
 		$result   = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}ced_ebay_profiles WHERE `user_id`=%s", $user_id ), 'ARRAY_A' );
 		$profiles = $result;
-// 		print_r($profiles);
-// 		return '';
+		// print_r($profiles);
+		// return '';
 		foreach ( $profiles as $id => $info ) {
 			$html .= '<option value="' . $info['id'] . '">' . $info['profile_name'] . '</option>';
 		}
@@ -243,91 +243,132 @@ class Ced_MBC_Render_Fields {
 	}
 
 	private static function get_connected_shops( $marketplace ) {
+		$result = array();
 		switch ( $marketplace ) {
 			case 'ebay':
-				$shops = get_option( 'ced_ebay_user_access_token', array() );
+			$shops = get_option( 'ced_ebay_user_access_token', array() );
 				// print_r($shops);die;
-				if ( $shops ) {
-					$result = array();
-					foreach ( $shops as $key => $value ) {
-						$result[] = array(
-							'_id'       => $key,
-							'name'      => $key,
-							'shop_info' => $value,
-						);
-					}
-				}
-
-				break;
-			case 'kogan':
-				$shops = get_option( 'ced_kogan_configuration_detail', array() );
-				if ( $shops ) {
-					$result = array(
-						array(
-							'_id'  => $shops['seller_id'] ?? '',
-							'name' => $shops['seller_id'] ?? '',
-						),
-					);
-				}
-
-				break;
-			case 'mydeal':
-				$shops = get_option( 'ced_mydeal_configuration_detail', array() );
-				if ( $shops ) {
-					$result = array(
-						array(
-							'_id'  => $shops['seller_id'] ?? '',
-							'name' => $shops['seller_id'] ?? '',
-						),
-					);
-				}
-
-				break;
-			case 'mysale':
+			if ( $shops ) {
 				$result = array();
-
-				break;
-			case 'catch':
-				global $wpdb;
-
-				$shops = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}ced_catch_accounts WHERE %d", 1 ), 'ARRAY_A' );
-
-				if ( $shops ) {
-					$result = array_map(
-						function( $info ) {
-							return array(
-								'_id'  => $info['id'],
-								'name' => $info['name'],
-							);
-						},
-						$shops
+				foreach ( $shops as $key => $value ) {
+					$result[] = array(
+						'_id'       => $key,
+						'name'      => $key,
+						'shop_info' => $value,
 					);
 				}
+			}
 
-				break;
+			break;
+			case 'kogan':
+			$shops = get_option( 'ced_kogan_configuration_detail', array() );
+			if ( $shops ) {
+				$result = array(
+					array(
+						'_id'  => $shops['seller_id'] ?? '',
+						'name' => $shops['seller_id'] ?? '',
+					),
+				);
+			}
+
+			break;
+			case 'mydeal':
+			$shops = get_option( 'ced_mydeal_configuration_detail', array() );
+			if ( $shops ) {
+				$result = array(
+					array(
+						'_id'  => $shops['seller_id'] ?? '',
+						'name' => $shops['seller_id'] ?? '',
+					),
+				);
+			}
+
+			break;
+			case 'mysale':
+			$result = array();
+
+			break;
+			case 'catch':
+			global $wpdb;
+
+			$shops = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}ced_catch_accounts WHERE %d", 1 ), 'ARRAY_A' );
+
+			if ( $shops ) {
+				$result = array_map(
+					function( $info ) {
+						return array(
+							'_id'  => $info['id'],
+							'name' => $info['name'],
+						);
+					},
+					$shops
+				);
+			}
+
+			break;
 
 		}
 		return $result;
 	}
 
-	public function get_profile_fields( $product_id, $shop_id, $marketplace, $profile_id ) {
+	public function get_profile_fields( $product_id, $shop_id, $marketplace, $profile_id, $site_id ) {
 		$html = '';
 		switch ( $marketplace ) {
 			case 'ebay':
-				$html = self::get_html($shop_id,$profile_id);
-				break;
+			$html = $this->get_html( $shop_id, $profile_id, $site_id );
+			break;
 
 			default:
 				// code...
-				break;
+			break;
 		}
 
-		echo json_encode( array( 'html' => $html ) );
-		wp_die();
+		return $html;
 	}
 
-	private static function get_html($shop_id,$profile_id) {
-		
+	private function get_html( $shop_id, $profile_id, $site_id ) {
+		global $wpdb;
+		$html ='<table>';
+		$result = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}ced_ebay_profiles WHERE `id`=%d", $profile_id ), 'ARRAY_A' );
+		$result = $result[0] ?? array();
+
+		if ( ! empty( $result ) ) {
+			$profile_data = json_decode( $result['profile_data'], 1 );
+			$category_id  = $profile_data['_umb_ebay_category']['default'] ?? 0;
+			$category_id  = 162925;
+			if ( $category_id ) {
+				$this->prepare_mapping_dropdown();
+				$cat_specs_file_path = wp_upload_dir()['basedir'] . '/ced-ebay/category-specifics/' . $shop_id . '/' . $site_id . '/ebaycat_' . $category_id . '.json';
+				if ( file_exists( $cat_specs_file_path ) ) {
+					$profile_fields = @file_get_contents( $cat_specs_file_path );
+					$profile_fields = ! empty( $profile_fields ) ? json_decode( $profile_fields, 1 ) : '';
+					foreach ($profile_fields as $field) {
+						$id = $field['localizedAspectName'] ?? '';
+						$type  = $field['aspectConstraint']['aspectMode'] ?? '';
+
+						$html .= '<tr>';
+						$html .= '<td><label class="ced_mbc_product_label">' . $field['localizedAspectName'] . '</label></td>';
+						if ( 'SELECTION_ONLY' == $type ) {
+							$html .= '<td><select>';
+							$html .= '<option value="">--</option>';
+							foreach ( $field['aspectValues'] as $value => $label ) {
+								$html .= '<option value="' . $value . '">' . $label . '</option>';
+							}
+							$html .= '</select></td>';
+						} else {
+							$html .= '<td><input type="text"></td>';
+						}
+
+						$html .= '<td>' . str_replace( array( '{{mapping_name_attribute}}', '{{mapping_attribute_selected}}' ), array( $id, 'selected' ), $this->mapping_drop_down ) . '</td>';
+						$html .= '</tr>';
+					}
+				}
+			}
+		} else {
+			$html .='<tr><td><label>No category fields found.</label></td></tr>';
+		}
+		$html .='</table>';
+		return $html;
 	}
 
 	private static function load_default_product_fields() {
