@@ -6,6 +6,10 @@ class Ced_MBC_Render_Fields {
 
 	public function __construct( $product_id ) {
 		$this->product_id = $product_id;
+		$metainfo         = get_post_meta( $product_id, '_ced_mbc_product_level_info', true );
+		$this->metainfo   = ! empty( $metainfo ) ? unserialize( $metainfo ) : array();
+		// print_r($this->metainfo);
+		// print_r(get_post_meta($product_id,'_ced_mbc_product_level_info',true));die;
 	}
 
 	public function render() {
@@ -28,6 +32,7 @@ class Ced_MBC_Render_Fields {
 
 	public function display_html() {
 		?>
+		<form action="" method="post">
 		<div id="ced_mbc_product_fields_wrapper">
 			<div class="ced_mbc_product_fields_tabs">
 				<?php
@@ -75,6 +80,7 @@ class Ced_MBC_Render_Fields {
 				?>
 			</div>
 		</div>
+		</form>
 		<?php
 	}
 
@@ -82,8 +88,13 @@ class Ced_MBC_Render_Fields {
 		if ( empty( $default_marketplace ) || empty( $default_shop ) ) {
 			return array();
 		}
+		$this->active_marketplace = $default_marketplace;
+		$this->active_shop_id     = $default_shop['_id'];
+		$this->site_id            = $this->active_shop['shop_info']['site_id'] ?? 0;
+
 		$this->prepare_mapping_dropdown();
 		$fields = self::load_default_product_fields();
+
 		switch ( $default_marketplace ) {
 			case 'ebay':
 				$html = $this->get_ebay_product_fields_html( $default_shop, $fields );
@@ -104,28 +115,33 @@ class Ced_MBC_Render_Fields {
 
 		$html .= $this->get_common_fields_html( $fields );
 
-		$html .= '</table>';
-		$html .= '<label class="ced_mbc_product_label">Profile</label>';
-		$html .= '<td><select class="ced_mbc_profile_list" data-marketplace="ebay" data-shop_id="' . esc_attr( $shop['_id'] ) . '" data-site_id="' . $shop['shop_info']['site_id'] . '" data-product_id="' . $this->product_id . '">';
-		$html .= '<option value="">--</option>';
+		$html   .= '</table>';
+		$default = $this->metainfo[ $this->active_marketplace ][ $this->active_shop_id ][ $this->site_id ]['profile']['default'] ?? '';
+		$html   .= '<label class="ced_mbc_product_label">Profile</label>';
+		$html   .= '<td><select class="ced_mbc_profile_list" data-marketplace="ebay" data-shop_id="' . esc_attr( $shop['_id'] ) . '" data-site_id="' . $shop['shop_info']['site_id'] . '" data-product_id="' . $this->product_id . '" name="_ced_mbc_product_level_info[' . $this->active_marketplace . '][' . $this->active_shop_id . '][' . $this->site_id . '][profile][default]">';
+		$html   .= '<option value="">--</option>';
 
 		global $wpdb;
 		$tableName = $wpdb->prefix . 'ced_ebay_profiles';
 		$user_id   = $shop['_id'] ?? '';
 		$site_id   = $shop['shop_info']['site_id'] ?? '';
-		// var_dump($site_id);
-		// var_dump($user_id);
-		$result   = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}ced_ebay_profiles WHERE `user_id`=%s", $user_id ), 'ARRAY_A' );
-		$profiles = $result;
-		// print_r($profiles);
-		// return '';
+		$result    = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}ced_ebay_profiles WHERE `user_id`=%s", $user_id ), 'ARRAY_A' );
+		$profiles  = $result;
 		foreach ( $profiles as $id => $info ) {
-			$html .= '<option value="' . $info['id'] . '">' . $info['profile_name'] . '</option>';
+			$selected = $default == $info['id'] ? 'selected' : '';
+			$html    .= '<option value="' . $info['id'] . '" ' . $selected . '>' . $info['profile_name'] . '</option>';
 		}
 		$html .= '</select>';
 
 		$html .= '</div>';
-		$html .= '<div id="ebay_profile_fields_wrapper"></div>';
+		$html .= '<div id="ebay_profile_fields_wrapper">';
+
+		if ( ! empty( $default ) ) {
+			$html .= $this->get_profile_fields( $this->product_id, $this->active_shop_id, $this->active_marketplace, $default, $this->site_id );
+		}
+
+		$html .= '</div>';
+
 		return $html;
 
 	}
@@ -133,23 +149,25 @@ class Ced_MBC_Render_Fields {
 	private function get_common_fields_html( $fields ) {
 		$html = '';
 		foreach ( $fields as $key => $field ) {
-			$id = $field['_id'] ?? '';
-
-			$html .= '<tr>';
-			$type  = $field['type'] ?? '_text_input';
-			$html .= '<td><label class="ced_mbc_product_label">' . $field['label'] . '</label></td>';
+			$id      = $field['_id'] ?? '';
+			$default = $this->metainfo[ $this->active_marketplace ][ $this->active_shop_id ][ $this->site_id ][ $id ]['default'] ?? '';
+			$metakey = $this->metainfo[ $this->active_marketplace ][ $this->active_shop_id ][ $this->site_id ][ $id ]['metakey'] ?? '';
+			$html   .= '<tr>';
+			$type    = $field['type'] ?? '_text_input';
+			$html   .= '<td><label class="ced_mbc_product_label">' . $field['label'] . '</label></td>';
 			if ( '_select' == $type ) {
 				$html .= '<td><select>';
 				$html .= '<option value="">--</option>';
 				foreach ( $field['options'] as $value => $label ) {
-					$html .= '<option value="' . $value . '">' . $label . '</option>';
+					$selected = $default == $value ? 'selected' : '';
+					$html    .= '<option value="' . $value . '" "' . $selected . '">' . $label . '</option>';
 				}
 				$html .= '</select></td>';
 			} else {
-				$html .= '<td><input type="text"></td>';
+				$html .= '<td><input type="text" name="_ced_mbc_product_level_info[' . $this->active_marketplace . '][' . $this->active_shop_id . '][' . $this->site_id . '][' . $id . '][default]" value="' . $default . '"></td>';
 			}
 
-			$html .= '<td>' . str_replace( array( '{{mapping_name_attribute}}', '{{mapping_attribute_selected}}' ), array( $id, 'selected' ), $this->mapping_drop_down ) . '</td>';
+			$html .= '<td>' . str_replace( '{{mapping_name_attribute}}', '_ced_mbc_product_level_info[' . $this->active_marketplace . '][' . $this->active_shop_id . '][' . $this->site_id . '][' . $id . '][metakey]', $this->mapping_drop_down ) . '</td>';
 			$html .= '</tr>';
 		}
 		return $html;
@@ -220,7 +238,8 @@ class Ced_MBC_Render_Fields {
 			$html .= '<option value="">--</option>';
 			foreach ( $options as $value => $label ) {
 				$selected = '{{mapping_attribute_selected}}';
-				$html    .= '<option value="' . esc_attr( $value ) . '" ' . $selected . '>' . esc_html( $label ) . '</option>';
+
+				$html .= '<option value="' . $value . '" ' . $selected . '>' . $label . '</option>';
 			}
 			$html .= '</optgroup>';
 		}
@@ -327,6 +346,11 @@ class Ced_MBC_Render_Fields {
 
 	public function get_profile_fields( $product_id, $shop_id, $marketplace, $profile_id, $site_id ) {
 		$html = '';
+
+			$this->active_marketplace = $marketplace;
+			$this->active_shop_id     = $shop_id;
+			$this->site_id            = $site_id;
+
 		switch ( $marketplace ) {
 			case 'ebay':
 				$html = $this->get_html( $shop_id, $profile_id, $site_id );
@@ -356,24 +380,24 @@ class Ced_MBC_Render_Fields {
 				if ( file_exists( $cat_specs_file_path ) ) {
 					$profile_fields = @file_get_contents( $cat_specs_file_path );
 					$profile_fields = ! empty( $profile_fields ) ? json_decode( $profile_fields, 1 ) : '';
-					foreach ( $profile_fields as $field ) {
-						$id   = $field['localizedAspectName'] ?? '';
-						$type = $field['aspectConstraint']['aspectMode'] ?? '';
+					foreach ($profile_fields as $field) {
+						$id = $field['localizedAspectName'] ?? '';
+						$type  = $field['aspectConstraint']['aspectMode'] ?? '';
 
 						$html .= '<tr>';
 						$html .= '<td><label class="ced_mbc_product_label">' . $field['localizedAspectName'] . '</label></td>';
 						if ( 'SELECTION_ONLY' == $type ) {
-							$html .= '<td><select>';
+							$html .= '<td><select name="_ced_mbc_product_level_info[' . $this->active_marketplace . '][' . $this->active_shop_id . '][' . $this->site_id . '][category][' . $id . '][default]">';
 							$html .= '<option value="">--</option>';
 							foreach ( $field['aspectValues'] as $value => $label ) {
-								$html .= '<option value="' . $value . '">' . $label . '</option>';
+								$html .= '<option value="' . $value . '" "' . ( $default == $value ? 'selected' : '' ) . '">' . $label . '</option>';
 							}
 							$html .= '</select></td>';
 						} else {
-							$html .= '<td><input type="text"></td>';
+							$html .= '<td><input type="text" name="_ced_mbc_product_level_info[' . $this->active_marketplace . '][' . $this->active_shop_id . '][' . $this->site_id . '][category][' . $id . '][default]" value="' . $default . '"></td>';
 						}
 
-						$html .= '<td>' . str_replace( array( '{{mapping_name_attribute}}', '{{mapping_attribute_selected}}' ), array( $id, 'selected' ), $this->mapping_drop_down ) . '</td>';
+						$html .= '<td>' . str_replace( array( '{{mapping_name_attribute}}', '{{mapping_attribute_selected}}' ), array( '_ced_mbc_product_level_info[' . $this->active_marketplace . '][' . $this->active_shop_id . '][' . $this->site_id . '][category][' . $id . '][metakey]', '' ), $this->mapping_drop_down ) . '</td>';
 						$html .= '</tr>';
 					}
 				}
