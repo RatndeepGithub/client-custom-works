@@ -237,9 +237,8 @@ class Ced_MBC_Render_Fields {
 			$html .= '<optgroup label="' . esc_attr( $optgroup ) . '">';
 			$html .= '<option value="">--</option>';
 			foreach ( $options as $value => $label ) {
-				$selected = '{{mapping_attribute_selected}}';
 
-				$html .= '<option value="' . $value . '" ' . $selected . '>' . $label . '</option>';
+				$html .= '<option value="' . $value . '">' . $label . '</option>';
 			}
 			$html .= '</optgroup>';
 		}
@@ -380,12 +379,13 @@ class Ced_MBC_Render_Fields {
 				if ( file_exists( $cat_specs_file_path ) ) {
 					$profile_fields = @file_get_contents( $cat_specs_file_path );
 					$profile_fields = ! empty( $profile_fields ) ? json_decode( $profile_fields, 1 ) : '';
-					foreach ($profile_fields as $field) {
-						$id = $field['localizedAspectName'] ?? '';
-						$type  = $field['aspectConstraint']['aspectMode'] ?? '';
-
-						$html .= '<tr>';
-						$html .= '<td><label class="ced_mbc_product_label">' . $field['localizedAspectName'] . '</label></td>';
+					foreach ( $profile_fields as $field ) {
+						$id      = $field['localizedAspectName'] ?? '';
+						$type    = $field['aspectConstraint']['aspectMode'] ?? '';
+						$default = $this->metainfo[ $this->active_marketplace ][ $this->active_shop_id ][ $this->site_id ]['category'][ $id ]['default'] ?? '';
+						$metakey = $this->metainfo[ $this->active_marketplace ][ $this->active_shop_id ][ $this->site_id ]['category'][ $id ]['metakey'] ?? '';
+						$html   .= '<tr>';
+						$html   .= '<td><label class="ced_mbc_product_label">' . $field['localizedAspectName'] . '</label></td>';
 						if ( 'SELECTION_ONLY' == $type ) {
 							$html .= '<td><select name="_ced_mbc_product_level_info[' . $this->active_marketplace . '][' . $this->active_shop_id . '][' . $this->site_id . '][category][' . $id . '][default]">';
 							$html .= '<option value="">--</option>';
