@@ -34,7 +34,7 @@ class Ced_MBC_Render_Fields {
 				$count               = 1;
 				$html                = '';
 				$default_marketplace = '';
-				$default_shop    = '';
+				$default_shop        = '';
 				foreach ( self::get_product_data_tabs() as $marketplace => $info ) {
 
 					if ( empty( $default_marketplace ) ) {
@@ -86,12 +86,12 @@ class Ced_MBC_Render_Fields {
 		$fields = self::load_default_product_fields();
 		switch ( $default_marketplace ) {
 			case 'ebay':
-			$html = $this->get_ebay_product_fields_html( $default_shop, $fields );
-			break;
+				$html = $this->get_ebay_product_fields_html( $default_shop, $fields );
+				break;
 
 			default:
-			$html = '';
-			break;
+				$html = '';
+				break;
 		}
 		return $html;
 
@@ -156,26 +156,29 @@ class Ced_MBC_Render_Fields {
 	}
 
 	public function prepare_mapping_dropdown() {
-
 		global $wpdb;
+
+		// Get WooCommerce attributes
 		$attributes               = wc_get_attribute_taxonomies();
 		$mapping_dropdown_options = array();
-		$attributes               = json_decode( json_encode( $attributes ), 1 );
-		$attr_keys                = array_column( $attributes, 'attribute_name' );
-		$attr_values              = array_column( $attributes, 'attribute_label' );
 
-		$prefix    = 'ced_umb_attr_';
-		$attr_keys = array_map(
-			function ( $value ) use ( $prefix ) {
-				return $prefix . $value;
-			},
-			$attr_keys
-		);
+		if ( ! empty( $attributes ) ) {
+			$prefix     = 'ced_umb_attr_';
+			$attributes = array_map(
+				function( $attr ) use ( $prefix ) {
+					return array(
+						'key'   => $prefix . $attr->attribute_name,
+						'value' => $attr->attribute_label,
+					);
+				},
+				$attributes
+			);
 
-		$attributes = array_combine( $attr_keys, $attr_values );
+			$attributes                                    = array_column( $attributes, 'value', 'key' );
+			$mapping_dropdown_options['Global Attributes'] = $attributes;
+		}
 
-		$mapping_dropdown_options['Global Attributes'] = $attributes;
-
+		// Check if ACF plugin is active
 		if ( class_exists( 'ACF' ) ) {
 			$acf_fields_posts = get_posts(
 				array(
@@ -184,37 +187,48 @@ class Ced_MBC_Render_Fields {
 				)
 			);
 
-			$acf_fields_posts = json_decode( json_encode( $acf_fields_posts ), 1 );
-
-			$acf_keys   = array_column( $acf_fields_posts, 'post_name' );
-			$acf_values = array_column( $acf_fields_posts, 'post_title' );
-
-			$acf_fields = array_combine( $acf_keys, $acf_values );
-
-			$mapping_dropdown_options['ACF Fields'] = $acf_fields;
+			if ( ! empty( $acf_fields_posts ) ) {
+				$acf_fields                             = array_column( $acf_fields_posts, 'post_title', 'post_name' );
+				$mapping_dropdown_options['ACF Fields'] = $acf_fields;
+			}
 		}
 
-		$metakeys                                  = $wpdb->get_results( $wpdb->prepare( "SELECT DISTINCT meta_key FROM {$wpdb->prefix}postmeta WHERE meta_key NOT LIKE '%wcf%' AND meta_key NOT LIKE '%elementor%' AND meta_key NOT LIKE '%_menu%'" ), 'ARRAY_A' );
-		$metakeys                                  = array_column( $metakeys, 'meta_key' );
-		$metakeys                                  = array_merge( $metakeys, array( '_product_title', '_product_short_description', '_product_long_description', '_product_long_and_short_description', '_product_id' ) );
-		$metakeys                                  = array_combine( $metakeys, $metakeys );
-		$mapping_dropdown_options['Custom Fields'] = $metakeys;
+		// Get custom meta keys
+		$query                                     = "
+        SELECT DISTINCT meta_key 
+        FROM {$wpdb->prefix}postmeta 
+        WHERE meta_key NOT LIKE '%wcf%' 
+        AND meta_key NOT LIKE '%elementor%' 
+        AND meta_key NOT LIKE '%_menu%'
+    ";
+		$metakeys                                  = $wpdb->get_col( $query );
+		$custom_keys                               = array(
+			'_product_title',
+			'_product_short_description',
+			'_product_long_description',
+			'_product_long_and_short_description',
+			'_product_id',
+		);
+		$metakeys                                  = array_merge( $metakeys, $custom_keys );
+		$mapping_dropdown_options['Custom Fields'] = array_combine( $metakeys, $metakeys );
 
+		// Generate HTML for dropdown
 		$html = '<select class="" name="{{mapping_name_attribute}}">';
 		foreach ( $mapping_dropdown_options as $optgroup => $options ) {
 			asort( $options );
-			$html .= '<optgroup label="' . $optgroup . '">';
+			$html .= '<optgroup label="' . esc_attr( $optgroup ) . '">';
 			$html .= '<option value="">--</option>';
 			foreach ( $options as $value => $label ) {
 				$selected = '{{mapping_attribute_selected}}';
-
-				$html .= '<option value="' . $value . '" ' . $selected . '>' . $label . '</option>';
+				$html    .= '<option value="' . esc_attr( $value ) . '" ' . $selected . '>' . esc_html( $label ) . '</option>';
 			}
 			$html .= '</optgroup>';
 		}
-		$html                   .= '</select>';
+		$html .= '</select>';
+
 		$this->mapping_drop_down = $html;
 	}
+
 
 	private static function get_product_data_tabs() {
 
@@ -246,66 +260,66 @@ class Ced_MBC_Render_Fields {
 		$result = array();
 		switch ( $marketplace ) {
 			case 'ebay':
-			$shops = get_option( 'ced_ebay_user_access_token', array() );
+				$shops = get_option( 'ced_ebay_user_access_token', array() );
 				// print_r($shops);die;
-			if ( $shops ) {
-				$result = array();
-				foreach ( $shops as $key => $value ) {
-					$result[] = array(
-						'_id'       => $key,
-						'name'      => $key,
-						'shop_info' => $value,
+				if ( $shops ) {
+					$result = array();
+					foreach ( $shops as $key => $value ) {
+						$result[] = array(
+							'_id'       => $key,
+							'name'      => $key,
+							'shop_info' => $value,
+						);
+					}
+				}
+
+				break;
+			case 'kogan':
+				$shops = get_option( 'ced_kogan_configuration_detail', array() );
+				if ( $shops ) {
+					$result = array(
+						array(
+							'_id'  => $shops['seller_id'] ?? '',
+							'name' => $shops['seller_id'] ?? '',
+						),
 					);
 				}
-			}
 
-			break;
-			case 'kogan':
-			$shops = get_option( 'ced_kogan_configuration_detail', array() );
-			if ( $shops ) {
-				$result = array(
-					array(
-						'_id'  => $shops['seller_id'] ?? '',
-						'name' => $shops['seller_id'] ?? '',
-					),
-				);
-			}
-
-			break;
+				break;
 			case 'mydeal':
-			$shops = get_option( 'ced_mydeal_configuration_detail', array() );
-			if ( $shops ) {
-				$result = array(
-					array(
-						'_id'  => $shops['seller_id'] ?? '',
-						'name' => $shops['seller_id'] ?? '',
-					),
-				);
-			}
+				$shops = get_option( 'ced_mydeal_configuration_detail', array() );
+				if ( $shops ) {
+					$result = array(
+						array(
+							'_id'  => $shops['seller_id'] ?? '',
+							'name' => $shops['seller_id'] ?? '',
+						),
+					);
+				}
 
-			break;
+				break;
 			case 'mysale':
-			$result = array();
+				$result = array();
 
-			break;
+				break;
 			case 'catch':
-			global $wpdb;
+				global $wpdb;
 
-			$shops = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}ced_catch_accounts WHERE %d", 1 ), 'ARRAY_A' );
+				$shops = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}ced_catch_accounts WHERE %d", 1 ), 'ARRAY_A' );
 
-			if ( $shops ) {
-				$result = array_map(
-					function( $info ) {
-						return array(
-							'_id'  => $info['id'],
-							'name' => $info['name'],
-						);
-					},
-					$shops
-				);
-			}
+				if ( $shops ) {
+					$result = array_map(
+						function( $info ) {
+							return array(
+								'_id'  => $info['id'],
+								'name' => $info['name'],
+							);
+						},
+						$shops
+					);
+				}
 
-			break;
+				break;
 
 		}
 		return $result;
@@ -315,12 +329,12 @@ class Ced_MBC_Render_Fields {
 		$html = '';
 		switch ( $marketplace ) {
 			case 'ebay':
-			$html = $this->get_html( $shop_id, $profile_id, $site_id );
-			break;
+				$html = $this->get_html( $shop_id, $profile_id, $site_id );
+				break;
 
 			default:
 				// code...
-			break;
+				break;
 		}
 
 		return $html;
@@ -328,7 +342,7 @@ class Ced_MBC_Render_Fields {
 
 	private function get_html( $shop_id, $profile_id, $site_id ) {
 		global $wpdb;
-		$html ='<table>';
+		$html   = '<table>';
 		$result = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}ced_ebay_profiles WHERE `id`=%d", $profile_id ), 'ARRAY_A' );
 		$result = $result[0] ?? array();
 
@@ -342,9 +356,9 @@ class Ced_MBC_Render_Fields {
 				if ( file_exists( $cat_specs_file_path ) ) {
 					$profile_fields = @file_get_contents( $cat_specs_file_path );
 					$profile_fields = ! empty( $profile_fields ) ? json_decode( $profile_fields, 1 ) : '';
-					foreach ($profile_fields as $field) {
-						$id = $field['localizedAspectName'] ?? '';
-						$type  = $field['aspectConstraint']['aspectMode'] ?? '';
+					foreach ( $profile_fields as $field ) {
+						$id   = $field['localizedAspectName'] ?? '';
+						$type = $field['aspectConstraint']['aspectMode'] ?? '';
 
 						$html .= '<tr>';
 						$html .= '<td><label class="ced_mbc_product_label">' . $field['localizedAspectName'] . '</label></td>';
@@ -365,9 +379,9 @@ class Ced_MBC_Render_Fields {
 				}
 			}
 		} else {
-			$html .='<tr><td><label>No category fields found.</label></td></tr>';
+			$html .= '<tr><td><label>No category fields found.</label></td></tr>';
 		}
-		$html .='</table>';
+		$html .= '</table>';
 		return $html;
 	}
 
