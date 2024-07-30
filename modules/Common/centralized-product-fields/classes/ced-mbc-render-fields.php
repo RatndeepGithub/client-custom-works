@@ -372,7 +372,7 @@ class Ced_MBC_Render_Fields {
 		if ( ! empty( $result ) ) {
 			$profile_data = json_decode( $result['profile_data'], 1 );
 			$category_id  = $profile_data['_umb_ebay_category']['default'] ?? 0;
-			$category_id  = 162925;
+			// $category_id  = 162925;
 			if ( $category_id ) {
 				$this->prepare_mapping_dropdown();
 				$cat_specs_file_path = wp_upload_dir()['basedir'] . '/ced-ebay/category-specifics/' . $shop_id . '/' . $site_id . '/ebaycat_' . $category_id . '.json';
