@@ -1,10 +1,14 @@
 <?php
 // Hook to add a meta box to the product post type
-add_action( 'add_meta_boxes_product', 'ced_mbc_create_product_metabox' );
+add_action( 'add_meta_boxes', 'ced_mbc_create_product_metabox' );
 
 // Function to create the product meta box
-function ced_mbc_create_product_metabox( $product ) {
-
+function ced_mbc_create_product_metabox() {
+    global $post,$post_type;
+    if( 'product' != $post_type ) {
+        return;
+    }
+// print_r($product);
 	// Add a meta box to the product edit screen
 	add_meta_box(
 		'ced-mbc-product-metabox',           // Meta box ID
@@ -12,7 +16,7 @@ function ced_mbc_create_product_metabox( $product ) {
 		'ced_mbc_render_product_metabox',    // Callback function to render the meta box content
 		'product',                           // Post type where the meta box will be added
 		'normal',                            // Context (position) where the meta box will be displayed
-		'core'                               // Priority within the context
+		'high'                               // Priority within the context
 	);
 
 }
@@ -43,21 +47,33 @@ function ced_mbc_enqueue_common_styles() {
 	wp_enqueue_style( 'ced-mbc-cpf-addon', CPF_URL . 'admin/css/ced-mbc-cpf-addon.css', array(), '1.0.0', 'all' );
 }
 
-function ced_mbc_render_product_metabox() {
+function ced_mbc_render_product_metabox($post) {
 	global $post;
 	$product_id = $post->ID;
 	include_once dirname( __FILE__ ) . '/classes/ced-mbc-render-fields.php';
-	$fields_obj = new Ced_MBC_Render_Fields( $product_id );
+	$fields_obj = new Ced_MBC_Render_Fields($product_id);
 	$fields_obj->render();
 }
 
 
-add_action( 'save_post', 'ced_mbc_save_product_fields_info' );
+add_action( 'save_post', 'ced_mbc_save_product_fields_info', 999 );
 
 function ced_mbc_save_product_fields_info( $post_id ) {
+    // print_r($_POST);
+    // die("po");
 	if ( isset( $_POST['_ced_mbc_product_level_info'] ) ) {
-		// die("pok");
-		update_post_meta( $post_id, '_ced_mbc_product_level_info', serialize( $_POST['_ced_mbc_product_level_info'] ) );
+	   // print_r($_POST['_ced_mbc_product_level_info'] );
+	   delete_post_meta( $post_id, '_ced_mbc_product_info');
+		$is_updated = update_post_meta( $post_id, '_ced_mbc_product_info', serialize( $_POST['_ced_mbc_product_level_info'] ));
+	    $logger = wc_get_logger();
+	    $source = array( 'source'=>'save_post_mbc' );
+	    $logger->info( ' Has saved : ' . date('y-m-d H:i:s') , $source);
+	     $logger->info( ' ID : ' . $post_id , $source);
+	    $logger->info( 'Data : ' . serialize($_POST['_ced_mbc_product_level_info']), $source);
+	     $logger->info( $is_updated, $source);
+	    $logger->info( '================================', $source);
+	   // var_dump($post_id);
+	   // die("po");
 	}
 }
 

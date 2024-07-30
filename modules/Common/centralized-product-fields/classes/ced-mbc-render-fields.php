@@ -2,14 +2,12 @@
 
 class Ced_MBC_Render_Fields {
 
-	private $product_id,$product_fields,$mapping_drop_down;
+	public $product_id,$product_fields,$mapping_drop_down,$metainfo,$active_marketplace,$active_shop_id,$site_id;
 
-	public function __construct( $product_id ) {
-		$this->product_id = $product_id;
-		$metainfo         = get_post_meta( $product_id, '_ced_mbc_product_level_info', true );
+	public function __construct($id) {
+	    	$this->product_id = $id;
+	    	$metainfo         = get_post_meta( $this->product_id, '_ced_mbc_product_info', true );
 		$this->metainfo   = ! empty( $metainfo ) ? unserialize( $metainfo ) : array();
-		// print_r($this->metainfo);
-		// print_r(get_post_meta($product_id,'_ced_mbc_product_level_info',true));die;
 	}
 
 	public function render() {
@@ -32,7 +30,6 @@ class Ced_MBC_Render_Fields {
 
 	public function display_html() {
 		?>
-		<form action="" method="post">
 		<div id="ced_mbc_product_fields_wrapper">
 			<div class="ced_mbc_product_fields_tabs">
 				<?php
@@ -80,7 +77,6 @@ class Ced_MBC_Render_Fields {
 				?>
 			</div>
 		</div>
-		</form>
 		<?php
 	}
 
@@ -375,7 +371,9 @@ class Ced_MBC_Render_Fields {
 			// $category_id  = 162925;
 			if ( $category_id ) {
 				$this->prepare_mapping_dropdown();
-				$cat_specs_file_path = wp_upload_dir()['basedir'] . '/ced-ebay/category-specifics/' . $shop_id . '/' . $site_id . '/ebaycat_' . $category_id . '.json';
+				$cat_specs_file_path = wp_upload_dir()['basedir'] . '/ced-ebay/category-specifics/' . $shop_id. '/ebaycat_' . $category_id . '.json';
+				// var_dump(file_exists( $cat_specs_file_path ));
+				// 	var_dump(( $cat_specs_file_path ));
 				if ( file_exists( $cat_specs_file_path ) ) {
 					$profile_fields = @file_get_contents( $cat_specs_file_path );
 					$profile_fields = ! empty( $profile_fields ) ? json_decode( $profile_fields, 1 ) : '';
@@ -387,10 +385,11 @@ class Ced_MBC_Render_Fields {
 						$html   .= '<tr>';
 						$html   .= '<td><label class="ced_mbc_product_label">' . $field['localizedAspectName'] . '</label></td>';
 						if ( 'SELECTION_ONLY' == $type ) {
+						  //  print_r($field);
 							$html .= '<td><select name="_ced_mbc_product_level_info[' . $this->active_marketplace . '][' . $this->active_shop_id . '][' . $this->site_id . '][category][' . $id . '][default]">';
 							$html .= '<option value="">--</option>';
-							foreach ( $field['aspectValues'] as $value => $label ) {
-								$html .= '<option value="' . $value . '" "' . ( $default == $value ? 'selected' : '' ) . '">' . $label . '</option>';
+							foreach ( array_column($field['aspectValues'],'localizedValue') as $value => $label ) {
+								$html .= '<option value="' . $label . '" ' . ( $default == $label ? 'selected' : '' ) . '>' . $label . '</option>';
 							}
 							$html .= '</select></td>';
 						} else {
