@@ -348,7 +348,7 @@ class Ced_MBC_Render_Fields {
 
 		switch ( $marketplace ) {
 			case 'ebay':
-				$html = $this->get_html( $shop_id, $profile_id, $site_id );
+				$html = $this->get_ebay_html( $shop_id, $profile_id, $site_id );
 				break;
 
 			default:
@@ -359,7 +359,7 @@ class Ced_MBC_Render_Fields {
 		return $html;
 	}
 
-	private function get_html( $shop_id, $profile_id, $site_id ) {
+	private function get_ebay_html( $shop_id, $profile_id, $site_id ) {
 		global $wpdb;
 		$html   = '<table>';
 		$result = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}ced_ebay_profiles WHERE `id`=%d", $profile_id ), 'ARRAY_A' );
@@ -378,12 +378,13 @@ class Ced_MBC_Render_Fields {
 					$profile_fields = @file_get_contents( $cat_specs_file_path );
 					$profile_fields = ! empty( $profile_fields ) ? json_decode( $profile_fields, 1 ) : '';
 					foreach ( $profile_fields as $field ) {
+					    
 						$id      = $field['localizedAspectName'] ?? '';
 						$type    = $field['aspectConstraint']['aspectMode'] ?? '';
 						$default = $this->metainfo[ $this->active_marketplace ][ $this->active_shop_id ][ $this->site_id ]['category'][ $id ]['default'] ?? '';
 						$metakey = $this->metainfo[ $this->active_marketplace ][ $this->active_shop_id ][ $this->site_id ]['category'][ $id ]['metakey'] ?? '';
 						$html   .= '<tr>';
-						$html   .= '<td><label class="ced_mbc_product_label">' . $field['localizedAspectName'] . '</label></td>';
+						$html   .= '<td><label class="ced_mbc_product_label _ced_mbc_req_level_'.strtolower($field['aspectConstraint']['aspectUsage']).'">' . $field['localizedAspectName'] . '</label></td>';
 						if ( 'SELECTION_ONLY' == $type ) {
 						  //  print_r($field);
 							$html .= '<td><select name="_ced_mbc_product_level_info[' . $this->active_marketplace . '][' . $this->active_shop_id . '][' . $this->site_id . '][category][' . $id . '][default]">';

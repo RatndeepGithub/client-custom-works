@@ -63,7 +63,6 @@ background-color: seashell;}
 .ced_mbc_product_label {
 	text-transform: uppercase;
 	font-weight: bold;
-	color: ;
 }
 .ced_mbc_product_fields_wrapper{
 	width: 100%;
@@ -72,3 +71,18 @@ background-color: seashell;}
 .ced_mbc_product_fields_wrapper select {
 	width: 100%;
 }
+.ced_mbc_product_label._ced_mbc_req_level_recommended {
+	color: orange;
+}
+.ced_mbc_product_label._ced_mbc_req_level_optional {
+	color: orange;
+}
+
+.ced_mbc_product_label._ced_mbc_req_level_recommended {
+	color: green;
+}
+
+.ced_mbc_product_label._ced_mbc_req_level_required {
+	color: red;
+}
+
