@@ -120,4 +120,32 @@
 		);
 	});
 
+	$(document).on('click','.ced_mbc_marketplace_tabs',function() {
+		let marketplace = $(this).data('marketplace');
+		let shop_id = $(this).data('shop_id');
+		let site_id = $(this).data('site_id');
+		let product_id = $(this).data('product_id');
+		let shop = $(this).data('shop');
+		$.ajax(
+		{
+			url:ajax_url,
+			data:{
+			ajax_nonce:ajax_nonce,
+			action:'get_marketplace_shop_fields_html',
+				shop_id:shop_id,
+				marketplace:marketplace,
+				product_id:product_id,
+				site_id:site_id,
+				shop:shop,
+			},
+			type:'POST',
+			success: function(response){
+				parsed_response = jQuery.parseJSON(response);
+				let html = parsed_response.html;
+				$("#"+marketplace+"_product_data").html(html);
+			}
+		}
+		);
+	});
+
 })( jQuery );
