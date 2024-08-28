@@ -2,10 +2,11 @@
 
 class Ced_MBC_Render_Fields {
 
-	public $product_id,$product_fields,$mapping_drop_down,$metainfo,$active_marketplace,$active_shop_id,$site_id;
+	public $product_id,$product,$product_fields,$mapping_drop_down,$metainfo,$active_marketplace,$active_shop_id,$site_id;
 
 	public function __construct( $id ) {
 			$this->product_id = $id;
+			$this->product    = wc_get_product( $id );
 			$metainfo         = get_post_meta( $this->product_id, '_ced_mbc_product_info', true );
 		$this->metainfo       = ! empty( $metainfo ) ? unserialize( $metainfo ) : array();
 	}
@@ -114,10 +115,11 @@ class Ced_MBC_Render_Fields {
 
 		$html .= $this->get_common_fields_html( $fields );
 
+		$site_id = $shop['shop_info']['site_id'] ?? $shop['_id'];
 		$html   .= '</table>';
 		$default = $this->metainfo[ $this->active_marketplace ][ $this->active_shop_id ][ $this->site_id ]['profile']['default'] ?? '';
 		$html   .= '<label class="ced_mbc_product_label">Profile</label>';
-		$html   .= '<td><select class="ced_mbc_profile_list" data-marketplace="ebay" data-shop_id="' . esc_attr( $shop['_id'] ) . '" data-site_id="' . $shop['shop_info']['site_id'] ?? $shop['_id'] . '" data-product_id="' . $this->product_id . '" name="_ced_mbc_product_level_info[' . $this->active_marketplace . '][' . $this->active_shop_id . '][' . $this->site_id . '][profile][default]">';
+		$html   .= '<td><select class="ced_mbc_profile_list" data-marketplace="ebay" data-shop_id="' . esc_attr( $shop['_id'] ) . '" data-site_id="' . $site_id . '" data-product_id="' . $this->product_id . '" name="_ced_mbc_product_level_info[' . $this->active_marketplace . '][' . $this->active_shop_id . '][' . $this->site_id . '][profile][default]">';
 		$html   .= '<option value="">--</option>';
 
 		global $wpdb;
@@ -218,8 +220,10 @@ class Ced_MBC_Render_Fields {
 		$html = '';
 		foreach ( $fields as $key => $field ) {
 			$id      = $field['_id'] ?? '';
-			$default = $this->metainfo[ $this->active_marketplace ][ $this->active_shop_id ][ $this->site_id ][ $id ]['default'] ?? '';
-			$metakey = $this->metainfo[ $this->active_marketplace ][ $this->active_shop_id ][ $this->site_id ][ $id ]['metakey'] ?? '';
+			$default = $this->metainfo[ $this->active_marketplace ][ $this->active_shop_id ][ $this->site_id ][ $id ]['default'];
+			$default = ! empty( $default ) ? $default : $field['default'];
+			$metakey = $this->metainfo[ $this->active_marketplace ][ $this->active_shop_id ][ $this->site_id ][ $id ]['metakey'];
+			$metakey = ! empty( $metakey ) ? $metakey : '';
 			$html   .= '<tr>';
 			$type    = $field['type'] ?? '_text_input';
 			$html   .= '<td><label class="ced_mbc_product_label">' . $field['label'] . '</label></td>';
@@ -509,15 +513,15 @@ class Ced_MBC_Render_Fields {
 					$type    = $field['type'] ?? '';
 					$default = $this->metainfo[ $this->active_marketplace ][ $this->active_shop_id ][ $this->site_id ]['category'][ $id ]['default'] ?? '';
 					$metakey = $this->metainfo[ $this->active_marketplace ][ $this->active_shop_id ][ $this->site_id ]['category'][ $id ]['metakey'] ?? '';
-					
-					$html   .= '<tr>';
-					$html   .= '<td><label class="ced_mbc_product_label _ced_mbc_req_level_' . strtolower( $field['requirement_level'] ) . '">' . $field['label'] . '</label></td>';
+
+					$html .= '<tr>';
+					$html .= '<td><label class="ced_mbc_product_label _ced_mbc_req_level_' . strtolower( $field['requirement_level'] ) . '">' . $field['label'] . '</label></td>';
 					if ( 'LIST' == $type ) {
-						$parameters                           = $field['code'];
-						$get_attribute_listvalues             = $productFieldInstance->ced_catch_get_attribute_list_option( $parameters, $shop_id );
-						$get_list_option      = $get_attribute_listvalues['values_lists'];
-						$attribute_value_list = $field['values_list'];
-						$valueForDropdown     = $productFieldInstance->ced_catch_get_attribute_list_option_values( $get_list_option, $attribute_value_list );
+						$parameters               = $field['code'];
+						$get_attribute_listvalues = $productFieldInstance->ced_catch_get_attribute_list_option( $parameters, $shop_id );
+						$get_list_option          = $get_attribute_listvalues['values_lists'];
+						$attribute_value_list     = $field['values_list'];
+						$valueForDropdown         = $productFieldInstance->ced_catch_get_attribute_list_option_values( $get_list_option, $attribute_value_list );
 						// print_r($field);
 						$html .= '<td><select name="_ced_mbc_product_level_info[' . $this->active_marketplace . '][' . $this->active_shop_id . '][' . $this->site_id . '][category][' . $id . '][default]">';
 						$html .= '<option value="">--</option>';
@@ -628,52 +632,61 @@ class Ced_MBC_Render_Fields {
 		return $html;
 	}
 
-	private static function load_default_product_fields() {
+	private function load_default_product_fields() {
 		$product_fields = array(
 			array(
-				'_id'   => '_brand',
-				'label' => 'Brand',
-				'group' => 'common',
+				'_id'     => '_brand',
+				'label'   => 'Brand',
+				'group'   => 'common',
+				'default' => function_exists( 'get_field' ) ? get_field( 'field_666fb50ba98ce', $this->product_id ) : '',
 			),
 			array(
-				'_id'   => '_gtin',
-				'label' => 'GTIN',
-				'group' => 'common',
+				'_id'     => '_gtin',
+				'label'   => 'GTIN',
+				'group'   => 'common',
+				'default' => function_exists( 'get_field' ) ? get_field( 'field_666fb1e704b78', $this->product_id ) : '',
 			),
 			array(
-				'_id'   => '_quantity',
-				'label' => 'Quantity',
-				'group' => 'common',
+				'_id'     => '_quantity',
+				'label'   => 'Quantity',
+				'group'   => 'common',
+				'default' => $this->product->get_stock_quantity(),
 			),
 			array(
-				'_id'   => '_stock_status',
-				'label' => 'Stock Status',
-				'group' => 'common',
+				'_id'     => '_stock_status',
+				'label'   => 'Stock Status',
+				'group'   => 'common',
+				'default' => $this->product->get_stock_status(),
 			),
 			array(
-				'_id'   => '_weight',
-				'label' => 'Weight (g)',
-				'group' => 'common',
+				'_id'     => '_weight',
+				'label'   => 'Weight (g)',
+				'group'   => 'common',
+				'default' => $this->product->get_weight(),
 			),
 			array(
-				'_id'   => '_length',
-				'label' => 'Length (cm)',
-				'group' => 'common',
+				'_id'     => '_length',
+				'label'   => 'Length (cm)',
+				'group'   => 'common',
+				'default' => $this->product->get_length(),
 			),
 			array(
-				'_id'   => '_width',
-				'label' => 'Width (cm)',
-				'group' => 'common',
+				'_id'     => '_width',
+				'label'   => 'Width (cm)',
+				'group'   => 'common',
+				'default' => $this->product->get_width(),
 			),
 			array(
-				'_id'   => '_height',
-				'label' => 'Height (cm)',
-				'group' => 'common',
+				'_id'     => '_height',
+				'label'   => 'Height (cm)',
+				'group'   => 'common',
+				'default' => $this->product->get_height(),
 			),
 			array(
-				'_id'   => '_gallery_images',
-				'label' => 'Gallery Images',
-				'group' => 'common',
+				'_id'     => '_gallery_images',
+				'label'   => 'Gallery Images',
+				'group'   => 'common',
+				'default' => '',
 			),
 		);
 		return $product_fields;
